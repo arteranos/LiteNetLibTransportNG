@@ -1,0 +1,21 @@
+{
+  "name": "com.willneedit.mirror.lnltransportng",
+  "displayName": "LiteNetLib Transport",
+  "version": "1.0.0",
+  "unity": "2021.3",
+  "description": "LiteNetLib transport for Mirror",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/willneedit/LiteNetLibTransportNG.git"
+  },
+  "keywords": [
+    "Mirror",
+    "Transport"
+  ],
+  "author": "willneedit",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/willneedit/LiteNetLibTransportNG.git"
+  },
+  "homepage": "https://github.com/willneedit/LiteNetLibTransportNG.git#readme"
+}
