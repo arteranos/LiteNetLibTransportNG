@@ -1,0 +1,3 @@
+[submodule "LiteNetLibCore-ForMirror"]
+	path = LiteNetLibCore-ForMirror
+	url = https://github.com/willneedit/LiteNetLibCore-ForMirror.git
