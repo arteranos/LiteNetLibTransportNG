@@ -301,7 +301,7 @@ namespace Mirror
             // (bigger values will cause TooBigPacketException even on loopback)
             //
             // see also: https://github.com/RevenantX/LiteNetLib/issues/388
-            return 576; // NetConstants.PossibleMtu[0]; // Sealed away. Bleh. :(
+            return 16 * 1024; // NetConstants.PossibleMtu[0]; // Sealed away. Bleh. :(
         }
 
         public override string ToString()
