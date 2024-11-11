@@ -100,7 +100,7 @@ namespace Mirror.LNLTransport
         {
             int id = ToMirrorId(peer.Id);
 
-            Debug.Log($"LiteNet SV received {reader.AvailableBytes} bytes. method={deliveryMethod}");
+            // Debug.Log($"LiteNet SV received {reader.AvailableBytes} bytes. method={deliveryMethod}");
             onData?.Invoke(id, reader.GetRemainingBytesSegment(), deliveryMethod);
             reader.Recycle();
         }

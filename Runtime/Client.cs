@@ -74,7 +74,7 @@ namespace Mirror.LNLTransport
 
         private void Listener_NetworkReceiveEvent(NetPeer peer, NetPacketReader reader, byte channel, DeliveryMethod deliveryMethod)
         {
-            Debug.Log($"LiteNet CL received {reader.AvailableBytes} bytes. method={deliveryMethod}");
+            // Debug.Log($"LiteNet CL received {reader.AvailableBytes} bytes. method={deliveryMethod}");
             onData?.Invoke(reader.GetRemainingBytesSegment(), deliveryMethod);
             reader.Recycle();
         }
