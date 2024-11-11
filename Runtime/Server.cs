@@ -16,10 +16,11 @@ namespace Mirror.LNLTransport
         private const int ConnectionCapacity = 1000;
 
         // configuration
-        readonly ushort port;
-        readonly int updateTime;
-        readonly int disconnectTimeout;
-        readonly string acceptConnectKey;
+        internal ushort port;
+        internal int updateTime;
+        internal int disconnectTimeout;
+        internal string acceptConnectKey;
+        internal bool natPunchEnabled;
 
         // LiteNetLib state
         NetManager server;
@@ -28,14 +29,6 @@ namespace Mirror.LNLTransport
         public event OnConnected onConnected;
         public event OnServerData onData;
         public event OnDisconnected onDisconnected;
-
-        public Server(ushort port, int updateTime, int disconnectTimeout, string acceptConnectKey)
-        {
-            this.port = port;
-            this.updateTime = updateTime;
-            this.disconnectTimeout = disconnectTimeout;
-            this.acceptConnectKey = acceptConnectKey;
-        }
 
         /// <summary>
         /// Mirror connection Ids are 1 indexed but LiteNetLib is 0 indexed so we have to add 1 to the peer Id
@@ -70,9 +63,12 @@ namespace Mirror.LNLTransport
 
             // create server
             EventBasedNetListener listener = new EventBasedNetListener();
-            server = new NetManager(listener);
-            server.UpdateTime = updateTime;
-            server.DisconnectTimeout = disconnectTimeout;
+            server = new NetManager(listener)
+            {
+                UpdateTime = updateTime,
+                DisconnectTimeout = disconnectTimeout,
+                NatPunchEnabled = natPunchEnabled
+            };
 
             // set up events
             listener.ConnectionRequestEvent += Listener_ConnectionRequestEvent;

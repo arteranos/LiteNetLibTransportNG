@@ -11,9 +11,10 @@ namespace Mirror.LNLTransport
     {
 
         // configuration
-        readonly ushort port;
-        readonly int updateTime;
-        readonly int disconnectTimeout;
+        internal ushort port;
+        internal int updateTime;
+        internal int disconnectTimeout;
+        internal bool natPunchEnabled;
 
         // LiteNetLib state
         NetManager client;
@@ -23,13 +24,6 @@ namespace Mirror.LNLTransport
         public event Action onDisconnected;
 
         public IPEndPoint RemoteEndPoint => client.FirstPeer;
-
-        public Client(ushort port, int updateTime, int disconnectTimeout)
-        {
-            this.port = port;
-            this.updateTime = updateTime;
-            this.disconnectTimeout = disconnectTimeout;
-        }
 
         public bool Connected { get; private set; }
 
@@ -46,10 +40,13 @@ namespace Mirror.LNLTransport
 
             // create client
             EventBasedNetListener listener = new EventBasedNetListener();
-            client = new NetManager(listener);
-            client.UpdateTime = updateTime;
-            client.DisconnectTimeout = disconnectTimeout;
-            client.MaxConnectAttempts = maxConnectAttempts;
+            client = new NetManager(listener)
+            {
+                UpdateTime = updateTime,
+                DisconnectTimeout = disconnectTimeout,
+                MaxConnectAttempts = maxConnectAttempts,
+                NatPunchEnabled = natPunchEnabled
+            };
 
             // DualMode seems to break some addresses, so make this an option so that it can be turned on when needed
             if (ipv6Enabled)

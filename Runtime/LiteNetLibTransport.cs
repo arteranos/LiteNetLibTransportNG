@@ -20,6 +20,9 @@ namespace Mirror
         public int disconnectTimeout = 5000;
         public bool ipv6Enabled;
 
+        [Tooltip("Enable NAT hole punching")]
+        public bool natPunchEnabled;
+
         [Tooltip("Maximum connection attempts before client stops and call disconnect event.")]
         public int maxConnectAttempts = 10;
 
@@ -68,8 +71,14 @@ namespace Mirror
 
         private void CreateClient(ushort port)
         {
-            client = new Client(port, updateTime, disconnectTimeout);
-
+            client = new Client()
+            {
+                port = port,
+                updateTime = updateTime,
+                disconnectTimeout = disconnectTimeout,
+                natPunchEnabled = natPunchEnabled
+            };
+                              
             client.onConnected += OnClientConnected.Invoke;
             client.onData += Client_onData;
             client.onDisconnected += OnClientDisconnected.Invoke;
@@ -177,7 +186,14 @@ namespace Mirror
                 return;
             }
 
-            server = new Server(port, updateTime, disconnectTimeout, connectKey);
+            server = new Server()
+            {
+                port = port,
+                updateTime = updateTime,
+                disconnectTimeout = disconnectTimeout,
+                acceptConnectKey = connectKey,
+                natPunchEnabled = natPunchEnabled
+            };
 
             server.onConnected += OnServerConnected.Invoke;
             server.onData += Server_onData;
