@@ -10,7 +10,7 @@ namespace Mirror.LNLTransport
     public delegate void OnServerData(int clientId, ArraySegment<byte> data, DeliveryMethod deliveryMethod);
     public delegate void OnDisconnected(int clientId);
 
-    public class Server
+    public class Server : INatPunchTarget
     {
         private const string Scheme = "litenet";
         private const int ConnectionCapacity = 1000;
@@ -24,7 +24,15 @@ namespace Mirror.LNLTransport
 
         // LiteNetLib state
         NetManager server;
-        Dictionary<int, NetPeer> connections = new Dictionary<int, NetPeer>(ConnectionCapacity);
+        Dictionary<int, NetPeer> connections = new(ConnectionCapacity);
+        NatPunchAddon natListener = new();
+
+        public Action<INatPunchTarget, IPEndPoint> OnNeedingNatPunch 
+        { 
+            // The server is just waiting for connections.
+            get => throw new NotSupportedException(); 
+            set => throw new NotSupportedException(); 
+        }
 
         public event OnConnected onConnected;
         public event OnServerData onData;
@@ -62,7 +70,8 @@ namespace Mirror.LNLTransport
             Debug.Log("LiteNet SV: starting...");
 
             // create server
-            EventBasedNetListener listener = new EventBasedNetListener();
+            EventBasedNetListener listener = new();
+
             server = new NetManager(listener)
             {
                 UpdateTime = updateTime,
@@ -77,6 +86,9 @@ namespace Mirror.LNLTransport
             listener.PeerDisconnectedEvent += Listener_PeerDisconnectedEvent;
             listener.NetworkErrorEvent += Listener_NetworkErrorEvent;
 
+            natListener.relay = server;
+
+            server.NatPunchModule.Init(natListener);
 
             // start listening
             server.Start(port);
@@ -123,11 +135,10 @@ namespace Mirror.LNLTransport
 
         public void Stop()
         {
-            if (server != null)
-            {
-                server.Stop();
-                server = null;
-            }
+            server?.Stop();
+            server = null;
+            natListener.relay = null;
+            natListener = null;
         }
 
 
@@ -228,7 +239,14 @@ namespace Mirror.LNLTransport
 
         public void LNL_Update()
         {
-                server?.PollEvents();
+            natListener?.Poll();
+
+            server?.NatPunchModule.PollEvents();
+
+            server?.PollEvents();
         }
+
+        public void InitiateNatPunch(IPEndPoint relay, string token) 
+            => server?.NatPunchModule.SendNatIntroduceRequest(relay, token);
     }
 }

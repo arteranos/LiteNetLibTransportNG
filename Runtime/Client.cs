@@ -7,7 +7,7 @@ namespace Mirror.LNLTransport
 {
     public delegate void OnClientData(ArraySegment<byte> data, DeliveryMethod deliveryMethod);
 
-    public class Client
+    public class Client : INatPunchTarget
     {
 
         // configuration
@@ -26,6 +26,7 @@ namespace Mirror.LNLTransport
         public IPEndPoint RemoteEndPoint => client.FirstPeer;
 
         public bool Connected { get; private set; }
+        public Action<INatPunchTarget, IPEndPoint> OnNeedingNatPunch { get; set; } = null;
 
         public void Connect(string address, int maxConnectAttempts, bool ipv6Enabled, string connectKey)
         {
@@ -39,7 +40,9 @@ namespace Mirror.LNLTransport
             Debug.Log("LiteNet CL: connecting...");
 
             // create client
-            EventBasedNetListener listener = new EventBasedNetListener();
+            EventBasedNetListener listener = new();
+            EventBasedNatPunchListener natPunchListener = new();
+
             client = new NetManager(listener)
             {
                 UpdateTime = updateTime,
@@ -60,8 +63,31 @@ namespace Mirror.LNLTransport
             listener.PeerDisconnectedEvent += Listener_PeerDisconnectedEvent;
             listener.NetworkErrorEvent += Listener_NetworkErrorEvent;
 
-            // start & connect
+            client.NatPunchModule.Init(natPunchListener);
+
+            natPunchListener.NatIntroductionRequest += (lep, rep, token) =>
+            {
+                Debug.Log($"NatIntroductionRequest CL: lep={lep}, rep={rep}, token={token}");
+            };
+
+            natPunchListener.NatIntroductionSuccess += (point, addrType, token) =>
+            {
+                Debug.Log($"NatIntroductionSuccess CL: point={point}, type={addrType}");
+            };
+
+            // start ...
             client.Start();
+
+            if (OnNeedingNatPunch != null)            
+            {
+                // Firewalled/NATed target, we need to call a relay with InitiateNatPunch()
+                IPEndPoint localEP = new(IPAddress.Parse(address), port);
+
+                // Move it to the upper layer
+                OnNeedingNatPunch.Invoke(this, localEP);
+            }
+
+            // Regardless, we have to try it. Either it works, or the connection timeout rings the alarm.
             client.Connect(address, port, connectKey);
         }
 
@@ -128,6 +154,14 @@ namespace Mirror.LNLTransport
             return false;
         }
 
-        public void LNL_Update() => client?.PollEvents();
+        public void LNL_Update()
+        {
+            client?.NatPunchModule.PollEvents();
+
+            client?.PollEvents();
+        }
+
+        public void InitiateNatPunch(IPEndPoint relay, string token) 
+            => client?.NatPunchModule.SendNatIntroduceRequest(relay, token);
     }
 }

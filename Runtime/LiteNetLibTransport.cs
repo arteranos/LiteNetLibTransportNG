@@ -6,11 +6,12 @@ using LiteNetLib;
 using UnityEngine;
 
 using Mirror.LNLTransport;
+using System.Net;
 
 namespace Mirror
 {
     [DisallowMultipleComponent]
-    public class LiteNetLibTransport : Transport
+    public class LiteNetLibTransport : Transport, INatPunchAddon
     {
         public const string Scheme = "litenet";
 
@@ -98,14 +99,7 @@ namespace Mirror
 
         public override void ClientConnect(string address)
         {
-            if (client != null)
-            {
-                Debug.LogWarning("Can't start client as one was already connected");
-                return;
-            }
-
-            CreateClient(port);
-            client.Connect(address, maxConnectAttempts, ipv6Enabled, connectKey);
+            PerformConnect(address, port);
         }
 
         public override void ClientConnect(Uri uri)
@@ -113,9 +107,18 @@ namespace Mirror
             if (uri.Scheme != Scheme)
                 throw new ArgumentException($"Invalid uri {uri}, use {Scheme}://host:port instead", nameof(uri));
 
-            int serverPort = uri.IsDefaultPort ? port : uri.Port;
-            CreateClient((ushort) serverPort);
-            client.Connect(uri.Host, maxConnectAttempts, ipv6Enabled, connectKey);
+            PerformConnect(uri.Host, uri.IsDefaultPort ? port : uri.Port);
+        }
+
+        private void PerformConnect(string host, int serverPort)
+        {
+            CreateClient((ushort)serverPort);
+
+            client.OnNeedingNatPunch = ClientNeedsNatPunch
+                ? (c, ipe) => OnInitiatingNatPunch?.Invoke(ipe)
+                : null;
+
+            client.Connect(host, maxConnectAttempts, ipv6Enabled, connectKey);
         }
 
         public override void ClientSend(ArraySegment<byte> segment, int channelId)
@@ -175,6 +178,10 @@ namespace Mirror
         /// Server message recieved while Transport was disabled
         /// </summary>
         readonly ConcurrentQueue<ServerDataMessage> serverDisabledQueue = new();
+
+        public Action<IPEndPoint> OnInitiatingNatPunch { get; set; }
+
+        public bool ClientNeedsNatPunch { get; set; }
 
         public override bool ServerActive() => server != null;
 
@@ -290,8 +297,8 @@ namespace Mirror
         public override void Shutdown()
         {
             Debug.Log("LiteNetLibTransport Shutdown");
-            client?.Disconnect();
-            server?.Stop();
+            ClientDisconnect();
+            ServerStop();
         }
 
         public override int GetMaxPacketSize(int channelId = Channels.Reliable)
@@ -330,6 +337,14 @@ namespace Mirror
                 }
             }
             return "LiteNetLib (inactive/disconnected)";
+        }
+
+        public void InitiateNatPunch(IPEndPoint relay, string token)
+        {
+            // Either client or server -- hosts have server up, and the local connection don't go that deep.
+            client?.InitiateNatPunch(relay, token);
+
+            server?.InitiateNatPunch(relay, token);
         }
     }
 }
