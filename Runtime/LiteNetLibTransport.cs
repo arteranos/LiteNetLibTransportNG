@@ -346,5 +346,14 @@ namespace Mirror
 
             server?.InitiateNatPunch(relay, token);
         }
+
+        public void ConnectBackTo(IPEndPoint clientIP)
+        {
+            if (server == null)
+                throw new InvalidOperationException("Not supposed to used outside the NAT punching");
+            server.Knock(clientIP);
+        }
+
+        public int LocalPort => client?.LocalPort ?? server?.LocalPort ?? 0;
     }
 }

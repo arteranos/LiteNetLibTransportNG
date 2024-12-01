@@ -11,5 +11,7 @@ namespace Mirror
         bool ClientNeedsNatPunch { get; set; }
         Action<IPEndPoint> OnInitiatingNatPunch { get; set; }
         void InitiateNatPunch(IPEndPoint relay, string token);
+        public int LocalPort { get; }
+        public void ConnectBackTo(IPEndPoint client);
     }
 }

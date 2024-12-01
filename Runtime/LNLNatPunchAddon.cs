@@ -34,6 +34,17 @@ namespace Mirror.LNLTransport
         /// <param name="relay">The relay to contact to as its guide</param>
         /// <param name="token">the token to match to each other</param>
         void InitiateNatPunch(IPEndPoint relay, string token);
+
+        /// <summary>
+        /// The server's (or, client's) untranslated local port
+        /// </summary>
+        int LocalPort { get; }
+
+        /// <summary>
+        /// Relayless NAT punching: Server attempts to ping to the client's local port with the external IP
+        /// </summary>
+        /// <param name="client"></param>
+        public void Knock(IPEndPoint client);
     }
 
     class WaitPeer

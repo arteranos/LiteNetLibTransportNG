@@ -28,6 +28,8 @@ namespace Mirror.LNLTransport
         public bool Connected { get; private set; }
         public Action<INatPunchTarget, IPEndPoint> OnNeedingNatPunch { get; set; } = null;
 
+        public int LocalPort => client.LocalPort;
+
         public void Connect(string address, int maxConnectAttempts, bool ipv6Enabled, string connectKey)
         {
             // not if already connected or connecting
@@ -109,7 +111,7 @@ namespace Mirror.LNLTransport
         {
             // this is called when the server stopped.
             // this is not called when the client disconnected.
-            Debug.Log($"LiteNet CL disconnected. info={disconnectInfo}");
+            Debug.Log($"LiteNet CL disconnected. info={disconnectInfo.Reason}");
             Connected = false;
             Disconnect();
         }
@@ -163,5 +165,7 @@ namespace Mirror.LNLTransport
 
         public void InitiateNatPunch(IPEndPoint relay, string token) 
             => client?.NatPunchModule.SendNatIntroduceRequest(relay, token);
+
+        public void Knock(IPEndPoint client) => throw new InvalidOperationException();
     }
 }

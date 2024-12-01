@@ -34,6 +34,8 @@ namespace Mirror.LNLTransport
             set => throw new NotSupportedException(); 
         }
 
+        public int LocalPort => server.LocalPort;
+
         public event OnConnected onConnected;
         public event OnServerData onData;
         public event OnDisconnected onDisconnected;
@@ -122,7 +124,7 @@ namespace Mirror.LNLTransport
             int id = ToMirrorId(peer.Id);
             // this is called both when a client disconnects, and when we
             // disconnect a client.
-            Debug.Log($"LiteNet SV client disconnected: {peer} info={disconnectInfo}");
+            Debug.Log($"LiteNet SV client disconnected: {peer} info={disconnectInfo.Reason}");
             onDisconnected?.Invoke(id);
             connections.Remove(id);
         }
@@ -248,5 +250,11 @@ namespace Mirror.LNLTransport
 
         public void InitiateNatPunch(IPEndPoint relay, string token) 
             => server?.NatPunchModule.SendNatIntroduceRequest(relay, token);
+
+        public void Knock(IPEndPoint clientExternal)
+        {
+            // Not sure why, but this NAT punch needs to go all the way.
+            server?.NatPunchModule.SendNatPunchPacket(clientExternal, false);
+        }
     }
 }
